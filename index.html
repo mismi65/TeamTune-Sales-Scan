@@ -77,6 +77,19 @@
   .ri-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 5px 10px; border: 1px solid var(--border); border-radius: 2px; }
   .ri-badge::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; display: inline-block; }
   .footer-note { font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 16px; }
+
+  /* Financiële hook */
+  .finance-hook { background: var(--ink); color: white; border-radius: 4px; padding: 28px 32px; margin-bottom: 20px; animation: fadeUp 0.6s ease 0.4s both; }
+  .finance-hook-label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 14px; }
+  .finance-hook-label::before { content: ''; display: inline-block; width: 18px; height: 2px; background: var(--accent); }
+  .finance-hook h4 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.25; margin-bottom: 14px; }
+  .finance-hook-text { font-size: 0.88rem; line-height: 1.7; opacity: 0.82; font-weight: 300; margin-bottom: 20px; }
+  .finance-hook-items { display: flex; flex-direction: column; gap: 10px; }
+  .finance-hook-item { display: flex; align-items: flex-start; gap: 12px; font-size: 0.84rem; line-height: 1.5; opacity: 0.9; }
+  .finance-hook-item-icon { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: rgba(212,80,10,0.25); display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .finance-hook-item-icon svg { width: 11px; height: 11px; fill: var(--accent); }
+  .finance-hook-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 18px 0; }
+  .finance-hook-footer { font-size: 0.8rem; opacity: 0.55; font-style: italic; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -146,6 +159,7 @@
       </div>
     </div>
     <div class="dimensions" id="dimensionsOutput"></div>
+    <div class="finance-hook" id="financeHook"></div>
     <div class="cta-block">
       <h3>Wat laat jouw salesteam liggen?</h3>
       <p>De scan geeft je een eerste inzicht. In een gratis gesprek van 30 minuten legt TeamTune uit wat de uitslag concreet betekent voor de performance van jouw team - en wat de eerste stap is om die winst te pakken.</p>
@@ -329,11 +343,80 @@ function showResult() {
     container.appendChild(div);
   });
 
+  // Financiële hook genereren
+  renderFinanceHook(total, dimScores, name, company);
+
   showScreen('result');
   window.scrollTo(0, 0);
   setTimeout(function() {
     document.querySelectorAll('.dim-fill').forEach(function(el) { el.style.width = el.dataset.width; });
   }, 100);
+}
+
+function renderFinanceHook(total, dimScores, name, company) {
+  // Vind de twee laagst scorende dimensies
+  var ranked = dimScores.map(function(s, i) { return { i: i, s: s }; }).sort(function(a, b) { return a.s - b.s; });
+  var worst = ranked[0];
+  var second = ranked[1];
+  var worstName = dimensions[worst.i].name;
+  var secondName = dimensions[second.i].name;
+  var teamLabel = company ? 'het salesteam van ' + company : (name ? 'het team van ' + name : 'jullie salesteam');
+
+  // Hook teksten per scorerange
+  var title, body, items, footer;
+
+  if (total < 35) {
+    title = 'Wat dit kost — in euro\'s';
+    body = 'Een score van ' + total + '% is geen soft signaal — het heeft een directe kostenkant. ' +
+      worstName + ' en ' + secondName + ' scoren het laagst. Dat zijn precies de gebieden waar teams energie verliezen die rechtstreeks van invloed is op omzet en marge.';
+    items = [
+      'Eén medewerker die vertrekt kost gemiddeld een half tot heel jaarsalaris aan werving, inwerken en productiviteitsverlies.',
+      'Teams met lage psychologische veiligheid verzuimen aantoonbaar vaker — elke dag extra verzuim kost €300–400 per persoon.',
+      'Deals die blijven hangen of te laat worden afgeschreven: directe omzetderving die niet zichtbaar is in de pipeline.'
+    ];
+    footer = 'Met een team van gemiddelde omvang lopen deze posten al snel op tot tienduizenden euro\'s per jaar — structureel en stil.';
+  } else if (total < 60) {
+    title = 'Waar de winst nu weglekt';
+    body = 'Een score van ' + total + '% betekent: het potentieel is er, maar ' + worstName.toLowerCase() + ' en ' + secondName.toLowerCase() + ' remmen de output. Dat vertaalt zich direct naar geld dat op tafel blijft liggen.';
+    items = [
+      'Een salesteam dat 10% effectiever beslissingen neemt sluit deals sneller — minder verloren cycli, meer omzet per kwartaal.',
+      'Onbetrouwbare forecast betekent sturen op aannames. Eén gemiste prognose kost een manager minstens een week bijsturing.',
+      'Individualistisch gedrag in een salesteam verlaagt het gezamenlijke slagingspercentage — zonder dat iemand het ziet.'
+    ];
+    footer = 'Dit zijn geen eenmalige verliezen. Ze herhalen zich elk kwartaal zolang de onderstroom niet wordt aangepakt.';
+  } else if (total < 75) {
+    title = 'De winst die net buiten bereik ligt';
+    body = 'Met een score van ' + total + '% presteert ' + teamLabel + ' solide — maar op ' + worstName.toLowerCase() + ' is er aantoonbaar resultaat te pakken. Kleine verbeteringen hebben hier een relatief groot effect.';
+    items = [
+      'Een betere pipeline-kwaliteit leidt tot minder verrassingen aan het kwartaalseinde — en hogere trefzekerheid op je forecast.',
+      'Eén dimensie omhoog brengen levert direct zichtbare output op: snellere sluitingen, minder verloren deals, betere samenwerking.',
+      'Teams in dit segment laten gemiddeld 10–20% performance liggen op specifieke punten die met één gerichte interventie te pakken zijn.'
+    ];
+    footer = 'De basis staat — de vraag is alleen: pak je die winst nu, of laat je hem nog een kwartaal liggen?';
+  } else {
+    title = 'Sterk nu — maar hoe borgen jullie dat?';
+    body = 'Een score van ' + total + '% is indrukwekkend. De uitdaging voor teams op dit niveau is niet repareren — het is borgen. Want consistentie onder druk is waar de meeste sterke teams uiteindelijk verlies lijden.';
+    items = [
+      'Verloop bij toppresteerders kost onevenredig veel: zij nemen kennis, klantrelaties en momentum mee.',
+      'Zonder structurele spiegel verdwijnt de urgentie om te reflecteren — totdat het een keer tegenzit.',
+      'Teams die de RI-methode zelf beheersen presteren consistenter, ook bij wisselingen van mensen of marktomstandigheden.'
+    ];
+    footer = 'De investering zit hier niet in repareren — maar in het vastleggen van wat jullie nu goed doen, zodat het stand houdt.';
+  }
+
+  var iconSvg = '<svg viewBox="0 0 12 12"><polygon points="6,1 11,10 1,10"/></svg>';
+
+  var itemsHtml = items.map(function(item) {
+    return '<div class="finance-hook-item"><div class="finance-hook-item-icon">' + iconSvg + '</div><span>' + item + '</span></div>';
+  }).join('');
+
+  document.getElementById('financeHook').innerHTML =
+    '<div class="finance-hook-label">Financiële impact</div>' +
+    '<h4>' + title + '</h4>' +
+    '<div class="finance-hook-text">' + body + '</div>' +
+    '<div class="finance-hook-items">' + itemsHtml + '</div>' +
+    '<div class="finance-hook-divider"></div>' +
+    '<div class="finance-hook-footer">' + footer + '</div>';
 }
 
 function openMailTo(e) {
